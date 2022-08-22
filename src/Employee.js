@@ -7,10 +7,8 @@ class Employee {
     #bonus = false;
     #allocation = false;
     personnesACharge;
-    constructor(personne, personnesACharge) {
-
+    constructor(personne) {
         this.personne = personne;
-        this.personnesACharge = personnesACharge;
     }
     /**
     * attribue des allocation au salairié
@@ -34,11 +32,23 @@ class Employee {
      */
 
 
+
+
     get bonus() {
         return this.#bonus;
     }
     get allocation() {
         return this.#allocation;
+    }
+
+
+    tostring() {
+        return `
+        ${this.personne.nom} ${this.personne.prenom}  genre: ${this.personne.sexe} 
+        personneACharge ${this.personnesACharge}
+        allocation      ${this.#allocation}
+        bonus           ${this.#bonus} 
+        `;
     }
 
 }
