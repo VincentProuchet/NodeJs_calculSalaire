@@ -31,25 +31,18 @@ class Salaire {
     /** montant de bonus */
     static bonus = 100;
 
-    constructor(employee, revenu) {
-        this.revenu = revenu;
+    constructor() {
+        this.revenu = 0;
         this.#salaire = -1;
         this.#impots = 0;
-
-        this.employe = employee;
-
+        this.employe = Employee.Employee;
     }
     /**
      * getter revenu
-     * permet de controler l'intégriter d'un revenu
-     * aucun revenue ne peux être inférieur à la norme 
-     * légale
      */
     set revenu(revenu) {
-        // oui la norme est vraiment basse
-        if (revenu > 0) {
-            this.#revenu = revenu;
-        }
+        this.#revenu = parseFloat(revenu);
+
     }
     /**
      * getter revenu
@@ -66,7 +59,7 @@ class Salaire {
             this.ajouterImpots(Salaire.regimeDePension);
 
             // si la personne n'est pas un homme
-            if (this.employe.personne.sexe != 'H') {
+            if (this.employe.personne.sexe != 'h') {
                 this.remiseImpots(Salaire.remiseNonHomme);
             }
             // prise en compte des personnes à charge
@@ -114,7 +107,18 @@ class Salaire {
         if (this.#impots < 0) {
             this.calculSalaire();
         }
-        return this.#salaire;
+        return this.#impots;
+    }
+    tostring() {
+        return `
+        ${this.employe.tostring()}
+        rebvenus bruts : ${this.#revenu}
+        revenus net : ${this.salaire}
+        montant des impots : ${this.impots}
+        `
+            ;
+
+
     }
 
 }

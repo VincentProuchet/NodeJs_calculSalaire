@@ -4,35 +4,37 @@ const Personne = require("./Personne");
  */
 class Employee {
     personne;
+    salaire;
     #bonus = false;
     #allocation = false;
-    personnesACharge;
-    constructor(personne) {
-        this.personne = personne;
+    #personnesACharge;
+    constructor() {
+        this.#personnesACharge = 0
+        this.personne = Personne.Personne
     }
     /**
-    * attribue des allocation au salairié
+    * change l'attribution des allocation au salairié
+    * toggle
    */
-    giveAllocation() { this.#allocation = true; }
+    toggleAllocation() { this.#allocation = !this.#allocation; }
     /**
-     * attribue un bonus au salarié
+     * change l'attribution d'un bonus au salarie
+     * toggle
      */
-    giveBonus() { this.#bonus = true; }
+    toggleBonus() { this.#bonus = !this.#bonus; }
     /**
      * retire les allocations au salairié
     */
-    removeAllocation() { this.#allocation = false; }
-    /**
-     * retire le bonus au salarié
-     */
-    removeBonus() { this.#bonus = false; }
-    /**
-     * effectue toutes les retenues sur le salaire
-     * 
-     */
 
-
-
+    set personnesACharge(value) {
+        value = parseInt(value);
+        if (value > 0) {
+            this.#personnesACharge = value;
+        }
+    }
+    get personnesACharge() {
+        return this.#personnesACharge
+    }
 
     get bonus() {
         return this.#bonus;

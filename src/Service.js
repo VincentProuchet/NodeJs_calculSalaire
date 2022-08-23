@@ -3,13 +3,14 @@ const readline = require("readline");
 const Salaire = require("./Salaire");
 const Employee = require("./Employee");
 const Personne = require("./Personne");
+const { resolve } = require("path");
 
 class Service {
     //notre line reader
     lineReader;
     annuler = false;
-    salaries;
-    salarieCourant = null;
+    salaire = Salaire.Salaire;
+    salarieCourant = Employee.Employee;
 
     static PROGRAM_TITLE = 'programme Salaire';
     static NEW_EMPLOYEE_PRENOM_PROMPT =
@@ -24,9 +25,21 @@ class Service {
     Entrez son nombre personne à charge 
         0 pour aucunes 
     Personnes à charges : `;
+    static SAISIR_SALAIRE =
+        `
+    saisisseez le revenu brut du salarié : `;
 
     constructor() {
+        this.salaire = Salaire.Salaire;
+        this.salarieCourant = this.salaire.employe;
+        this.salarieCourant.personne.nom = "Prouchet";
+        this.salarieCourant.personne.prenom = "Vincent";
+        this.salarieCourant.personne.sexe = "h";
+        this.salarieCourant.personnesACharge = "0";
+        this.salaire.revenu = "18000";
         this.salaries = new Set()
+
+
         this.lineReader = readline.createInterface(
             process.stdin,
             process.stdout
@@ -48,7 +61,7 @@ class Service {
                     await this.createNewEmployee().then(
 
                         resolve => {
-                            this.annuler = false;
+
                             console.log(this.menuPrincipal());
                             return;
                         },
@@ -57,15 +70,19 @@ class Service {
                     ).catch(err => console.log(err));
                 // calculer les salaires
                 case '2':
-                    this.annuler = false;
-
+                    this.salaire.calculSalaire();
+                    console.log(this.salaire.tostring());
                     return;
                 // lister les employée
                 case '3':
-                    this.salaries.forEach((a) => {
-                        console.log(a.tostring());
-                    })
+                    console.log(this.salarieCourant.tostring());
 
+                    return;
+                case '4':
+                    this.salarieCourant.toggleAllocation();
+                    return;
+                case '5':
+                    this.salarieCourant.toggleBonus();
                     return;
                 // fermeture du programme
                 case '99':
@@ -84,7 +101,10 @@ class Service {
 
         });
     }
-
+    /**
+     * texte de menu principal
+     * @returns chaine de caractére fomratée
+     */
     menuPrincipal() {
         return `
         _______________________________
@@ -93,49 +113,83 @@ class Service {
         _______________________________
  
         1  - créer un nouvel Employee
-        2  - calculer les salaire
-        3  - liste des salariés
+        2  - calculer le salaire
+        3  - voir salarié courant
+        4  - changer Allocation (toggle)
+        5  - changer Bonus (toggle)        
 
         99 - Quitter
  
         `;
     }
+    /**
+     * texte de création de nouvel employée 
+     * @returns une chaine de caractére formaté 
+     */
     menuNewEmployee() {
         return `
-        Un nouvel employé va être ajouté à la liste des employé 
-        l'opération peut être annulée en entrant $Exit
+        Un nouvel employé va être crée
+        l'opération peut être annulée en entrant une saisie vide
         Entrez son Nom  : `;
     }
 
+    saisirRevenu() {
+        return
+
+    }
+    /**
+     * créer un nouveau salarié
+     * suis une procédure effectuant plusieurs demandes de saisies
+     * à l'utilisateur
+     * le nouveau salarie sera stocké dans le  salarieCourant de l'instance
+     */
     async createNewEmployee() {
         this.annuler = false;
         let complete = false;
+        let personnesACharge = 0;
+        let revenu = 0;
         let newPersonne = Personne.Personne;
 
         // entréee du nom
-        newPersonne.nom = await this.assignateValue(this.menuNewEmployee());
-        if (this.annuler) { return; }
+        await this.assignateValue(this.menuNewEmployee()).then(
+            (saisie) => { newPersonne.nom = saisie; }
+        );
         // entrée du prénom
-        newPersonne.prenom = await this.assignateValue(Service.NEW_EMPLOYEE_PRENOM_PROMPT);
-        if (this.annuler) { return; }
+        await this.assignateValue(Service.NEW_EMPLOYEE_PRENOM_PROMPT).then(
+            (saisie) => { newPersonne.prenom = saisie; }
+        );
         // entrée du genre
-        newPersonne.sexe = await this.assignateValue(Service.NEW_EMPLOYEE_GENDER_PROMPT);
-        if (this.annuler) { return; }
-        let newEmployee = Employee.Employee;
-        newEmployee.personne = newPersonne;
-
+        await this.assignateValue(Service.NEW_EMPLOYEE_GENDER_PROMPT).then(
+            (saisie) => { newPersonne.sexe = saisie; }
+        );
         // entrée des personnes à charge
-        newEmployee.personnesACharge = await this.assignateValue(Service.NEW_EMPLOYEE_PERSONNE_A_CHARGE_PROMPT);
-        if (this.annuler) { return; }
-        else { complete = true; }
+        await this.assignateValue(Service.NEW_EMPLOYEE_PERSONNE_A_CHARGE_PROMPT).then(
+            (saisie) => {
+                personnesACharge = saisie;
+                complete = true;
+            }
+        )
+        await this.assignateValue(Service.SAISIR_SALAIRE).then(
+            (saisie) => { revenu = saisie }
+        ).catch(err => console.log(err));
+
+
         if (complete && !this.annuler) {
-            this.salarieCourant = newEmployee;
+
+            this.salarieCourant.personne = newPersonne;
+            this.salarieCourant.personnesACharge = personnesACharge;
+            this.salaire.Employee = this.salarieCourant
+            this.salaire.revenu = revenu;
             this.Ajoutsuccess();
+
         }
-        return;
-
     }
-
+    /**
+     * fait une demande de saisie à l'utilisateur
+     * 
+     * @param {*} promp texte à afficher lors de la demande
+     * @returns une prommesse
+     */
     async assignateValue(promp) {
         this.lineReader.setPrompt(promp);
         this.lineReader.prompt();
@@ -145,30 +199,26 @@ class Service {
                     case '$Exit':
                         this.annuler = true;
                         return reject('la saisie est annulée');
+                    case '':
+                        this.annuler = true;
+                        return reject('la saisie est annulée');
                     default:
-
                         return resolve(saisie);
-
                 }
 
             });
-        })).then(
-            (saisie) => {
-                return saisie;
-            },
-            (reject) => {
-                this.annuler = true
-
-                throw (reject);
-            }
-
-        )
+        }))
     }
-
+    /**
+     * Affiche un texte lors de la réussite de création d'un Salarié en tant que salarié courant
+     */
     Ajoutsuccess() {
         this.salaries.add(this.salarieCourant);
         console.log(`Nouvel employée ${this.salarieCourant.personne.nom}, ${this.salarieCourant.personne.prenom} ajouté avec succés`);
     }
 
 }
+
+
+
 exports.Service = new Service();
